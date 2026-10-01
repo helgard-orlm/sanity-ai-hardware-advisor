@@ -43,6 +43,7 @@ pre{background:var(--code);padding:10px;border-radius:8px;overflow:auto;font-siz
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 .tablewrap{overflow-x:auto}
+code.in{overflow-wrap:anywhere;white-space:normal;font-size:12px}
 .answer{overflow-wrap:anywhere}
 .answer table{display:block;overflow-x:auto}
 .answer pre{max-height:none}
@@ -85,7 +86,7 @@ function render(i){
     h+=stepsCard;
     const rounds=(t.validator||[]).filter(v=>v.errors&&v.errors.length);
     if(rounds.length) h+=`<div class="card"><h3>Validator — answer sent back</h3>${rounds.map(v=>`<div class="round"><b>Round ${v.round+1}</b><ul>${v.errors.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`).join("")}</div>`;
-    if(t.calculations&&t.calculations.length) h+=`<div class="card"><h3>Calculations (recomputed by code from <code>law.formula</code>)</h3><div class="tablewrap"><table><tr><th>law</th><th>inputs</th><th>result</th></tr>${t.calculations.map(c=>`<tr><td>${esc(c.law)}</td><td><code>${esc(JSON.stringify(c.inputs))}</code></td><td>${esc(typeof c.result==="number"?+c.result.toFixed(3):c.result)}</td></tr>`).join("")}</table></div></div>`;
+    if(t.calculations&&t.calculations.length) h+=`<div class="card"><h3>Calculations (recomputed by code from <code>law.formula</code>)</h3><div class="tablewrap"><table><tr><th>law</th><th>result</th><th>inputs</th></tr>${t.calculations.map(c=>`<tr><td>${esc(c.law)}</td><td><b>${esc(typeof c.result==="number"?+c.result.toFixed(3):c.result)}</b></td><td><code class="in">${esc(JSON.stringify(c.inputs).replace(/,/g,", "))}</code></td></tr>`).join("")}</table></div></div>`;
     h+=`<div class="card"><h3>Answer</h3><div class="answer">${md(t.text)}</div></div>`;
   }
   if(r.grade) h+=`<div class="card"><h3>Blind grader (frozen checklist)</h3><div class="tablewrap"><table>${r.checklist.map((c,k)=>{const g=r.grade.items[k]||{};return `<tr><td class="${g.pass?"pass":"fail"}">${g.pass?"pass":"fail"}</td><td>${esc(c)}${g.why?`<div class="meta">${esc(g.why)}</div>`:""}</td></tr>`}).join("")}</table></div></div>`;
