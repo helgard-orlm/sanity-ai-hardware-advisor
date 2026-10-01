@@ -8,6 +8,8 @@ reference hardware), not a product catalog, and code recomputes its math from th
 - Studio: https://hw-for-ai-lab-v2.sanity.studio
 - Agent connection: Sanity Context MCP `https://api.sanity.io/v2026-02-27/context/mcp/onwa0wvs/v2`
 - Second entry: Knowledge Base `kbW7wsbtJQkl` (Context MCP in KB mode, 138 core documents)
+- **Replay of real runs** (no model on the page, every tool call / validator round / answer as recorded): https://helgard-orlm.github.io/sanity-ai-hardware-advisor/
+- Results: blind grader 47/78 (v2) → 53/78 (v3) → **59/78 (v3.1 via Sanity Context MCP)**, 9 scenarios × 3 — `v2/acceptance/results/`
 
 ## Layout
 
