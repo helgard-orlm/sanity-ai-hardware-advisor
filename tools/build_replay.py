@@ -1,6 +1,6 @@
 """Build the static replay page data (docs/runs.json) from recorded probe sessions.
-Picks, per scenario, the best-graded English answer of a graded run; long tool results are cut.
-Usage: python3 tools/build_replay.py <sessions_dir> <graded.json[,more.json]> [scenario=session ...]"""
+Shows EVERY run of one graded measurement (no picking) + optional labelled featured runs; long tool results are cut.
+Usage: python3 tools/build_replay.py <sessions_dir> <measured.graded.json> [extra.graded.json[,more]] [scenario=session ...]"""
 import json, os, re, sys
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,25 +30,25 @@ def session(path, scid, grade):
             "grade": grade, "turns": turns}
 
 if __name__ == "__main__":
-    sess_dir = sys.argv[1]; graded = [g for f in sys.argv[2].split(",") for g in json.load(open(f))]
-    force = dict(a.split("=") for a in sys.argv[3:])
-    best = {}
-    for g in graded:
-        j = [x.get("pass") for x in g["judge"]]; score = sum(1 for x in j if x)
-        last = [m for m in json.load(open(f"{sess_dir}/{g['session']}.json"))["messages"] if m["role"] == "assistant"][-1]
-        if not english(last["text"]): continue
-        if g["scenario"] not in best or score > best[g["scenario"]][0]:
-            best[g["scenario"]] = (score, g["session"], g["judge"])
+    # ALL runs of the measured run (no picking), plus optional featured runs from other runs, labelled.
+    sess_dir = sys.argv[1]; graded = json.load(open(sys.argv[2]))
+    extra = [g for f in (sys.argv[3].split(",") if len(sys.argv) > 3 and sys.argv[3] else []) for g in json.load(open(f))]
+    featured = dict(a.split("=") for a in sys.argv[4:])  # scenario=session from the extra runs
+    def one(g, note=None):
+        j = g["judge"]; r = session(f"{sess_dir}/{g['session']}.json", g["scenario"],
+                                    {"pass": sum(1 for x in j if x.get("pass")), "of": len(j), "items": j})
+        last = [t for t in r["turns"] if t["role"] == "assistant"][-1]["text"]
+        r["english"] = english(last); r["note"] = note; return r
     out = []
     for scid in sorted(SC):
-        if scid in force:
-            g = next(g for g in graded if g["session"] == force[scid]); j = g["judge"]
-            out.append(session(f"{sess_dir}/{force[scid]}.json", scid,
-                               {"pass": sum(1 for x in j if x.get("pass")), "of": len(j), "items": j})); continue
-        if scid not in best: print("no English answer for", scid); continue
-        sc, sid, judge = best[scid]
-        out.append(session(f"{sess_dir}/{sid}.json", scid, {"pass": sc, "of": len(judge), "items": judge}))
+        runs = [one(g) for g in graded if g["scenario"] == scid]
+        if scid in featured:
+            g = next(g for g in extra if g["session"] == featured[scid])
+            runs.append(one(g, "featured trace from an EARLIER v3.1 run (not part of the 59/78 measurement); that run's checker "
+                               "had two bugs, so some validator rounds in it are false alarms"))
+        out.append({"scenario": scid, "runs": runs})
     os.makedirs(os.path.join(HERE, "docs"), exist_ok=True)
     json.dump(out, open(os.path.join(HERE, "docs", "runs.json"), "w"), ensure_ascii=False, indent=1)
     open(os.path.join(HERE, "docs", "runs.js"), "w").write("window.RUNS=" + json.dumps(out, ensure_ascii=False) + ";\n")
-    print(len(out), "runs →", os.path.join(HERE, "docs", "runs.json"))
+    tot = sum(r["grade"]["pass"] for x in out for r in x["runs"] if not r["note"]); of = sum(r["grade"]["of"] for x in out for r in x["runs"] if not r["note"])
+    print(sum(len(x["runs"]) for x in out), "runs; measured total", f"{tot}/{of}")

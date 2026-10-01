@@ -48,6 +48,8 @@ code.in{overflow-wrap:anywhere;white-space:normal;font-size:12px}
 .answer table{display:block;overflow-x:auto}
 .answer pre{max-height:none}
 .pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+.runs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.runs button{all:unset;cursor:pointer;padding:4px 10px;border:1px solid var(--line);border-radius:999px;font-size:13px}.runs button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:600}
+.note{background:var(--warn);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;margin-left:6px}
 @media (max-width:760px){.wrap{grid-template-columns:1fr}nav{position:static;flex-direction:row;overflow-x:auto}nav button{flex:0 0 auto}nav .s{display:none}}
 </style>
@@ -57,8 +59,8 @@ code.in{overflow-wrap:anywhere;white-space:normal;font-size:12px}
   <h1>AI hardware advisor — replay of real runs</h1>
   <p>Recorded runs of the advisor (v3.1) over <b>Sanity Context MCP</b> on project <code>onwa0wvs</code>, dataset <code>v2</code>.
   No model runs on this page: every tool call, every validator round and every answer is exactly what was recorded.</p>
-  <p>One run per acceptance scenario — the best-graded English answer of two full runs (9 scenarios × 3). Long tool results are cut.
-  <a href="https://github.com/helgard-orlm/sanity-ai-hardware-advisor">Code &amp; method</a></p>
+  <p><b>All 27 runs of the measured run</b> (9 scenarios × 3, blind grader total <b>59/78</b>) — nothing picked or hidden, including weak
+  answers and answers that came out in Russian (a language bug, fixed later by a code check). Long tool results are cut. <a href="https://github.com/helgard-orlm/sanity-ai-hardware-advisor">Code &amp; method</a></p>
 </header>
 <div class="wrap">
   <nav id="nav" aria-label="Scenarios"></nav>
@@ -75,10 +77,11 @@ const md=t=>{try{return marked.parse(t)}catch(e){return "<pre>"+esc(t)+"</pre>"}
 let RUNS=[];
 function stepHTML(s){const cls=s.kind==="web"?"web":"";
   return `<details><summary><span class="k ${cls}">${esc(s.kind)}</span>${esc(s.tool)} ${esc(s.args).slice(0,140)}</summary><pre>${esc(s.result)}</pre></details>`}
-function render(i){
-  const r=RUNS[i],[title,sub]=NAMES[r.scenario]||[r.scenario,""];
+function render(i,k=0){
+  const S=RUNS[i],r=S.runs[k],[title,sub]=NAMES[S.scenario]||[S.scenario,""];
   document.querySelectorAll("nav button").forEach((b,j)=>b.setAttribute("aria-current",j===i));
-  let h=`<div class="card"><h2>${esc(title)} <span class="badge">grader ${r.grade?r.grade.pass+"/"+r.grade.of:"—"}</span></h2><div class="meta">${esc(sub)} · session ${esc(r.session)}</div></div>`;
+  const tabs=S.runs.map((x,n)=>`<button data-k="${n}" aria-pressed="${n===k}">${x.note?"Featured (earlier run)":"Run "+(n+1)} · ${x.grade.pass}/${x.grade.of}${x.english?"":" · RU"}</button>`).join("");
+  let h=`<div class="card"><h2>${esc(title)} <span class="badge">grader ${r.grade.pass}/${r.grade.of}</span></h2><div class="meta">${esc(sub)} · session ${esc(r.session)}</div><div class="runs">${tabs}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:""}${r.english?"":`<div class="note">This answer came out in Russian although the question was in English — a known bug of this run (the account's language setting leaked in); the app now checks the language in code and sends such answers back.</div>`}</div>`;
   for(const t of r.turns){
     if(t.role==="user"){h+=`<div class="card"><h3>Person</h3><div class="q">${esc(t.text)}</div></div>`;continue}
     const base=t.steps.filter(s=>s.kind==="base").length,web=t.steps.filter(s=>s.kind==="web").length;
@@ -91,13 +94,16 @@ function render(i){
   }
   if(r.grade) h+=`<div class="card"><h3>Blind grader (frozen checklist)</h3><div class="tablewrap"><table>${r.checklist.map((c,k)=>{const g=r.grade.items[k]||{};return `<tr><td class="${g.pass?"pass":"fail"}">${g.pass?"pass":"fail"}</td><td>${esc(c)}${g.why?`<div class="meta">${esc(g.why)}</div>`:""}</td></tr>`}).join("")}</table></div></div>`;
   document.getElementById("main").innerHTML=h;
-  try{localStorage.setItem("replay-sc",r.scenario)}catch(e){}
+  document.querySelectorAll(".runs button").forEach(b=>b.onclick=()=>render(i,+b.dataset.k));
+  try{localStorage.setItem("replay-sc",S.scenario)}catch(e){}
 }
 Promise.resolve(window.RUNS||fetch("runs.json").then(r=>r.json())).then(d=>{RUNS=d;
-  document.getElementById("nav").innerHTML=d.map((r,i)=>{const[n,s]=NAMES[r.scenario]||[r.scenario,""];return `<button data-i="${i}"><span class="t">${esc(n)}</span><span class="s">${esc(s)}</span></button>`}).join("");
+  document.getElementById("nav").innerHTML=d.map((S,i)=>{const[n,s]=NAMES[S.scenario]||[S.scenario,""];const m=S.runs.filter(x=>!x.note);const p=m.reduce((a,x)=>a+x.grade.pass,0),o=m.reduce((a,x)=>a+x.grade.of,0);return `<button data-i="${i}"><span class="t">${esc(n)}</span><span class="s">${esc(s)} · ${p}/${o} over ${m.length} runs</span></button>`}).join("");
   document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{render(+b.dataset.i);window.scrollTo(0,0)});
-  let start=0;try{const s=localStorage.getItem("replay-sc");const j=d.findIndex(r=>r.scenario===s);if(j>=0)start=j}catch(e){}
-  render(start)}).catch(e=>{document.getElementById("main").innerHTML=`<div class="card">Could not load runs.json: ${esc(e)}</div>`});
+  let start=0,run=0;const U=new URLSearchParams(location.search);
+  try{const s=U.get("sc")||localStorage.getItem("replay-sc");const j=d.findIndex(S=>S.scenario===s);if(j>=0)start=j}catch(e){}
+  if(U.get("run")){run=Math.max(0,Math.min(d[start].runs.length-1,(+U.get("run")||1)-1))}
+  render(start,run)}).catch(e=>{document.getElementById("main").innerHTML=`<div class="card">Could not load runs.json: ${esc(e)}</div>`});
 </script>
 </body>
 </html>
