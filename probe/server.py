@@ -2,7 +2,7 @@
 Every answer carries its trace: each MCP call with arguments and result, web searches, shell attempts.
 All dialogs are stored in data/sessions/<id>.json (Claude reads them). Stdlib only.
 Run: python3 server.py  → http://<host>:8930"""
-import json, os, subprocess, sys, threading, time, uuid
+import re, json, os, subprocess, sys, threading, time, uuid
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
@@ -62,6 +62,14 @@ def prompt_for(s, mode):
         pre += "Stored situation (validated by the app from earlier turns):\n" + json.dumps(s["situation"], ensure_ascii=False) + "\n\n"
     tail = "\n\n(Reply in the language of this last User message.)" if mode.get("db") == "v31real" else ""
     return pre + ("Conversation so far:\n\n" + hist if hist else "") + "User: " + s["messages"][-1]["text"] + tail
+
+CYR = re.compile("[а-яА-ЯёЁіїєІЇЄ]")
+def lang_err(question, answer):
+    """Answer must be in the language of the person's last message (checked for Latin vs Cyrillic script)."""
+    q_cyr = len(CYR.findall(question)) > 0.2 * max(len(question), 1); a_cyr = len(CYR.findall(answer)) > 0.2 * max(len(answer), 1)
+    if q_cyr == a_cyr: return []
+    lang = "Russian/Ukrainian" if q_cyr else "English"
+    return [f"The answer is not in the language of the person's last message. Rewrite the whole answer in {lang}."]
 
 def exec_codex(prompt, mode, cfg, msg, sid, t0):
     p = subprocess.Popen(["codex", "exec", "--json", "--skip-git-repo-check", "--ephemeral", "-s", "read-only",
@@ -127,6 +135,7 @@ def run_turn(sid, mode):
         for rnd in range(V3_ROUNDS + 1):
             try: visible, block, errs = answer_check.check(answer, msg["trace"], s.get("situation") or {})
             except Exception as e: visible, block, errs = answer, None, []; msg["validator"].append({"round": rnd, "crash": str(e)[:300]}); break
+            if mode.get("db") == "v31real": errs = errs + lang_err(s["messages"][-2]["text"], visible)
             msg["validator"].append({"round": rnd, "errors": errs})
             if not errs or rnd == V3_ROUNDS or mode.get("db") == "v3textnv": break  # nv = no validator feedback (control)
             save_msg(sid, msg)
