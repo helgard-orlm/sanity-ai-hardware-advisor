@@ -1,0 +1,162 @@
+{
+ "_about": "Acceptance with twists for the AI hardware advisor v2. Written BEFORE the v3 changes (architect method: a run checks a prediction, it does not give birth to a patch). Each scenario lists the risk classes (R#, lib/agents/architect_risk_catalog_2026-09-27.md) it tests. 'code' checks run on the probe trace; 'judge' checks are read by a blind LLM judge from the answer text. >=3 runs per scenario.",
+ "scenarios": [
+  {
+   "id": "A1_no_country",
+   "risks": [
+    "R4"
+   ],
+   "turns": [
+    "I want a PC to run a ~30B local LLM for coding help. Budget about 2000."
+   ],
+   "judge": [
+    "States explicitly that country/currency was not given and names the assumption it made (or gives prices for more than one region).",
+    "Every price has a date and a region.",
+    "Gives the memory need as numbers from a law (weights + KV cache) before naming hardware."
+   ],
+   "code": {
+    "min_base_calls": 3
+   }
+  },
+  {
+   "id": "A2_not_in_base",
+   "risks": [
+    "R2",
+    "R3",
+    "R1"
+   ],
+   "turns": [
+    "What PC do I need to run GLM-5.3-Flash locally at home? I don't care about the cheapest, but I don't want a datacenter."
+   ],
+   "judge": [
+    "Does NOT substitute another model (e.g. GLM-4.5-Air) for GLM-5.3-Flash when sizing; if a value is unknown it says unknown.",
+    "Size of GLM-5.3-Flash weights is taken from a web source with a link (about 300+ GiB at 8-bit class), not guessed.",
+    "Considers at least 3 solution paths (GPU-only, unified memory, CPU+RAM offload for MoE, cloud) with one line why yes/no each.",
+    "Names a CPU+large-RAM offload path (MoE experts in system RAM with one GPU) as a real option."
+   ],
+   "code": {
+    "web_before_answer": true,
+    "min_web_calls": 1
+   }
+  },
+  {
+   "id": "A3_dont_buy",
+   "risks": [
+    "R2",
+    "R10"
+   ],
+   "turns": [
+    "Once a month I need to run a 70B model over a few long documents. I have only a laptop with integrated graphics. What should I buy?"
+   ],
+   "judge": [
+    "Offers the 'don't buy / rent cloud' path with a cost comparison over time (months/years).",
+    "Does not push a purchase as the only answer."
+   ],
+   "code": {
+    "min_base_calls": 3
+   }
+  },
+  {
+   "id": "A4_changed_mind",
+   "risks": [
+    "R5"
+   ],
+   "turns": [
+    "I want a desktop for image generation, budget $1500, I'm in Poland.",
+    "I already have a case and a 650W PSU.",
+    "Actually, forget images - I want a local coding assistant instead, same budget, and I'd prefer a laptop now."
+   ],
+   "judge": [
+    "Final answer is about a laptop for a local coding assistant (not image generation, not a desktop).",
+    "Keeps the budget $1500 and the country Poland from earlier turns.",
+    "Notes that the case/PSU are no longer relevant for a laptop (or does not pretend they are used)."
+   ],
+   "code": {}
+  },
+  {
+   "id": "A5_budget_too_small",
+   "risks": [
+    "R2",
+    "R4"
+   ],
+   "turns": [
+    "Build me a PC that runs a 70B model at good speed for $400."
+   ],
+   "judge": [
+    "Says plainly that $400 cannot run a 70B model at good speed and shows the numbers why.",
+    "Offers real alternatives: smaller model, used hardware, cloud, or a larger budget with a figure."
+   ],
+   "code": {}
+  },
+  {
+   "id": "A6_false_alarm",
+   "risks": [
+    "R7"
+   ],
+   "turns": [
+    "I have an RTX 4070 12GB and 32GB RAM. I want to chat with an 8B model locally. Do I need to upgrade anything?"
+   ],
+   "judge": [
+    "Answers that no upgrade is needed for this goal (8B fits 12GB at 4-8 bit) and shows the numbers.",
+    "Does not recommend buying anything as necessary; optional extras are clearly optional."
+   ],
+   "code": {}
+  },
+  {
+   "id": "A7_generation_gap",
+   "risks": [
+    "R6",
+    "R11"
+   ],
+   "turns": [
+    "I have an old PC: AMD Athlon II X3 455, 8GB DDR3, 400W PSU. I want to put an RTX 3060 12GB in it for Stable Diffusion. Good plan?"
+   ],
+   "judge": [
+    "Finds that the Athlon II has no AVX and names what breaks because of it (e.g. PyTorch/prebuilt wheels or other software requiring AVX) - without being told.",
+    "Checks the PSU (400W vs RTX 3060 needs) and names it as risk or condition.",
+    "Mentions at least one other old-vs-new gap (PCIe generation, BIOS/UEFI, RAM 8GB) as a check."
+   ],
+   "code": {}
+  },
+  {
+   "id": "B1_kv_concurrency",
+   "risks": [
+    "R6",
+    "R9"
+   ],
+   "structure_test": true,
+   "turns": [
+    "Our team of 8 developers wants to share one local Qwen3-30B-A3B coding model, each with about 32k tokens of context at the same time. Will a single RTX 5090 32GB be enough? Show the math."
+   ],
+   "judge": [
+    "Computes weights memory for a stated quantization (params x bits / 8) with numbers.",
+    "Computes KV cache from the model's layers, KV heads and head dim (not a guess), multiplied by 8 users x 32k tokens, and gets a total in GB.",
+    "Compares weights + KV total with 32 GB and gives a clear verdict with a concrete fix (fewer users/context, KV quantization, second GPU, etc.)."
+   ],
+   "code": {
+    "min_base_calls": 3
+   }
+  },
+  {
+   "id": "B2_own_vs_rent",
+   "risks": [
+    "R6",
+    "R9",
+    "R2"
+   ],
+   "structure_test": true,
+   "turns": [
+    "I would use a 70B model about 3 hours a day, every day. Is it cheaper over two years to buy a machine that runs it or to rent a GPU in the cloud? Electricity is 0.25 EUR/kWh, I'm in Germany."
+   ],
+   "judge": [
+    "Gives a hardware option with a price (source/date) that can actually hold a 70B model at a stated quantization, with the memory math.",
+    "Computes cloud cost for 3 h/day over 24 months from a stated hourly price (source/date).",
+    "Computes electricity for the owned machine with watts x hours x 0.25 EUR.",
+    "Gives a breakeven (months) or a clear two-year total for both and a verdict."
+   ],
+   "code": {
+    "min_base_calls": 3
+   }
+  }
+ ]
+}

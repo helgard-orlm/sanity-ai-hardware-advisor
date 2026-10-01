@@ -1,0 +1,866 @@
+[
+ {
+  "scenario": "A1_no_country",
+  "session": "5b1df4eada08",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 25,
+    "web": 0,
+    "sec": 210.8,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "States that region is unknown and assumes USD, but does not explicitly state that currency was not given."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Prices lack dates, and some also lack regions."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "raw-weight calculation: `30 × 4.5 / 8 = 16.875 GB`.\n- KV cache at 32,768 tokens: `3 GiB`, calculated with `law-kv-cache-context`.",
+    "why": "Gives numerical weight and law-based KV-cache needs before naming hardware."
+   }
+  ]
+ },
+ {
+  "scenario": "A1_no_country",
+  "session": "b13e849c388b",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 44,
+    "web": 0,
+    "sec": 241.9,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "155,429 UAH in Ukraine and 3,750 USD in the US",
+    "why": "Gives prices for two regions."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "The 0.40 USD/hour rental price has a date but no region."
+   },
+   {
+    "n": 3,
+    "pass": false,
+    "quote": "",
+    "why": "Names RTX 3090 and RTX 5090 before calculating weights and KV cache."
+   }
+  ]
+ },
+ {
+  "scenario": "A1_no_country",
+  "session": "2f7ec59a08ab",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 24,
+    "web": 0,
+    "sec": 200.3,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "States currency and region are unknown, but names no assumed currency or region and gives no second region."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "RTX 3060 and cloud rental prices lack dates and regions."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "веса: `30 × 4.5 / 8 = 16.875 GB` — рассчитано по `law-weights-memory`;\n- KV-кэш при 32 768 токенах и одной сессии: `3 GiB` — рассчитано по `law-kv-cache-context`;",
+    "why": "Quantifies weights and KV cache using named laws before naming hardware."
+   }
+  ]
+ },
+ {
+  "scenario": "A2_not_in_base",
+  "session": "9cf05fbfaf4c",
+  "code": {
+   "min_web_calls": true,
+   "web_before_answer": true,
+   "_counts": {
+    "base": 19,
+    "web": 8,
+    "sec": 271.8,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "FP8 download size: unknown exactly",
+    "why": "Sizes GLM-5.3-Flash without substituting another model and labels an unknown."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "The FP8 size is calculated from parameter count, not taken from a linked web source."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "Multi-GPU system — yes, conditionally; three 96 GB cards provide 288 GB.\n- Unified-memory computer — maybe; it needs roughly 256 GB or more usable unified memory and compatible runtime support.\n- CPU/RAM offload — maybe; 256–512 GB RAM can hold the model, but PCIe/RAM offload may be too slow for interactive use.",
+    "why": "Considers three solution paths with a reason for each."
+   },
+   {
+    "n": 4,
+    "pass": false,
+    "quote": "",
+    "why": "Mentions generic CPU/RAM offload but does not specify MoE experts in system RAM with one GPU."
+   }
+  ]
+ },
+ {
+  "scenario": "A2_not_in_base",
+  "session": "4ee519844bda",
+  "code": {
+   "min_web_calls": true,
+   "web_before_answer": true,
+   "_counts": {
+    "base": 24,
+    "web": 3,
+    "sec": 181.2,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "BF16-размер файла официально не найден",
+    "why": "Sizes GLM-5.3-Flash without substituting another model and identifies unknowns."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "FP8-репозиторий занимает примерно 328 ГБ; [список файлов модели](https://huggingface.co/zai-org/GLM-5.3-Flash/tree/main)",
+    "why": "Attributes the approximately 300+ GiB FP8 weight size to linked web sources."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "solution-path-multi-gpu` — **maybe**: потребуется суммарно примерно 400+ ГБ VRAM; это быстро превращается в сервероподобную систему.",
+    "why": "Also evaluates unified memory, CPU+RAM offload and cloud, each with a verdict and reason."
+   },
+   {
+    "n": 4,
+    "pass": true,
+    "quote": "модель всё равно должна храниться в RAM, а PCIe/CPU-offload резко ухудшит задержку",
+    "why": "Presents large system RAM with one RTX 5090 as a real, conditional MoE offload option."
+   }
+  ]
+ },
+ {
+  "scenario": "A2_not_in_base",
+  "session": "5b4984196b38",
+  "code": {
+   "min_web_calls": true,
+   "web_before_answer": true,
+   "_counts": {
+    "base": 17,
+    "web": 4,
+    "sec": 137.6,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "that reference must not be used to size GLM-5.3-Flash",
+    "why": "Sizes the requested model and explicitly rejects substitution."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Links Q4 weights at 179.634 GiB, not the required 8-bit-class size of about 300+ GiB."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "`unified-memory`: maybe — 256–512 GB unified memory can fit the Q4 weights\n`cpu-ram-offload-moe`: yes, conditionally — 256 GB is the floor\n`cloud-gpu-rent`: maybe — useful for testing before buying",
+    "why": "Provides at least three solution paths with reasons."
+   },
+   {
+    "n": 4,
+    "pass": true,
+    "quote": "`cpu-ram-offload-moe`: yes, conditionally — 256 GB is the floor; 384–512 GB is preferable",
+    "why": "Names large-RAM MoE offload as viable within its single-GPU workstation recommendation."
+   }
+  ]
+ },
+ {
+  "scenario": "A3_dont_buy",
+  "session": "25c562bb4d53",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 25,
+    "web": 2,
+    "sec": 241.3,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "= 5000 месяцев",
+    "why": "Compares purchase and rental costs through a break-even period in months."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "при запуске раз в месяц покупать GPU нерационально",
+    "why": "Explicitly recommends against buying for monthly use."
+   }
+  ]
+ },
+ {
+  "scenario": "A3_dont_buy",
+  "session": "d689ab94a230",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 31,
+    "web": 6,
+    "sec": 364.8,
+    "validator_rounds": 3
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "ownership-versus-rental breakeven of approximately **110.4 months**, or **9.2 years**",
+    "why": "Recommends avoiding a purchase and compares ownership with rental over time."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "do not buy a GPU for this monthly workload unless the documents must remain local",
+    "why": "Explicitly recommends a non-purchase path."
+   }
+  ]
+ },
+ {
+  "scenario": "A3_dont_buy",
+  "session": "4ab9cb6132de",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 36,
+    "web": 1,
+    "sec": 330.6,
+    "validator_rounds": 3
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "окупаемость по `law-own-vs-rent-breakeven`: примерно 3311 месяцев",
+    "why": "Recommends renting instead of buying and compares ownership with rental costs over months."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "не покупать ПК, а арендовать GPU или использовать API",
+    "why": "Explicitly offers alternatives to purchasing."
+   }
+  ]
+ },
+ {
+  "scenario": "A4_changed_mind",
+  "session": "b0d29fd44a4e",
+  "code": {
+   "_counts": {
+    "base": 24,
+    "web": 0,
+    "sec": 141.5,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "Need: local coding assistant",
+    "why": "The recommendation targets a laptop for local coding."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Retains $1500 but does not retain Poland as the purchase country; Polish electricity cost alone is insufficient."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "the previous case and 650 W PSU are irrelevant to a laptop purchase",
+    "why": "Explicitly excludes the desktop case and PSU from the laptop purchase."
+   }
+  ]
+ },
+ {
+  "scenario": "A5_budget_too_small",
+  "session": "a12d316f2984",
+  "code": {
+   "_counts": {
+    "base": 35,
+    "web": 1,
+    "sec": 226.5,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "A complete local PC for a 70B model with good speed cannot be responsibly specified for $400.",
+    "why": "Plainly rejects the budget and supports it with 39.375 GB of weights, 47.25 GB with margin, and a $219.99 GPU with only 12 GB."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "A $400 local purchase should target roughly 4–8B, not 70B.",
+    "why": "Offers a concrete smaller-model alternative and GPU rental at $0.40/hour."
+   }
+  ]
+ },
+ {
+  "scenario": "A5_budget_too_small",
+  "session": "839cb78a815a",
+  "code": {
+   "_counts": {
+    "base": 28,
+    "web": 2,
+    "sec": 218.7,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "A complete local 70B PC for $400 is not realistic.",
+    "why": "Shows 35 GB minimum for 4-bit weights versus a $219.99 12 GB GPU and a $4,399.99 32 GB GPU."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "Qwen3-30B-A3B Q4 at 18 GB",
+    "why": "Offers a specific smaller model and cloud/API inference as alternatives."
+   }
+  ]
+ },
+ {
+  "scenario": "A5_budget_too_small",
+  "session": "8bba1d361676",
+  "code": {
+   "_counts": {
+    "base": 21,
+    "web": 0,
+    "sec": 123.2,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "A $400 total budget cannot provide the required memory capacity.",
+    "why": "Plainly rejects the budget and shows 35–39.375 GB weight requirements versus 12 GB VRAM, plus a speed ceiling."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "A 7–14B model is realistic near this budget",
+    "why": "Offers a concrete smaller-model alternative."
+   }
+  ]
+ },
+ {
+  "scenario": "A6_false_alarm",
+  "session": "e68b89dc7867",
+  "code": {
+   "_counts": {
+    "base": 8,
+    "web": 2,
+    "sec": 111.7,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "Q4 вместе с KV-кэшем: примерно **6,1 GB**, с запасом 20% — **7,35 GB** (расчёт).\n- RTX 4070 имеет 12 GB VRAM, поэтому Q4 помещается. BF16 — нет.\n\nИтог: **апгрейд не нужен**.",
+    "why": "Shows Q4 memory fits within 12 GB and explicitly says no upgrade is needed."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "покупать новую видеокарту, несколько GPU, б/у карту, unified-memory систему или арендовать GPU — нет для этой задачи",
+    "why": "Rejects hardware purchases as necessary and presents alternatives as optional."
+   }
+  ]
+ },
+ {
+  "scenario": "A4_changed_mind",
+  "session": "4113e7465a5a",
+  "code": {
+   "_counts": {
+    "base": 39,
+    "web": 9,
+    "sec": 467.6,
+    "validator_rounds": 3
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "the recommended laptop should run Qwen3-8B Q4.5 or Qwen2.5-Coder 7B Q4.5 locally",
+    "why": "Recommends a laptop running local coding models."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "Your **$1,500** budget therefore equals **5,814.30 PLN**",
+    "why": "Retains the budget and prices the laptop in Poland."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "a desktop upgrade may work, but you now prefer a laptop",
+    "why": "Treats existing desktop hardware as an alternative, without claiming the laptop uses it."
+   }
+  ]
+ },
+ {
+  "scenario": "A4_changed_mind",
+  "session": "f015ae8e9def",
+  "code": {
+   "_counts": {
+    "base": 19,
+    "web": 0,
+    "sec": 147.5,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "локальный coding assistant на ноутбуке",
+    "why": "Explicitly addresses a laptop for a local coding assistant."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Retains Poland but never states the $1500 budget."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "не соответствует новой предпочтительной форме",
+    "why": "Treats the existing desktop case and PSU as outside the preferred laptop setup."
+   }
+  ]
+ },
+ {
+  "scenario": "A6_false_alarm",
+  "session": "2f333406ca43",
+  "code": {
+   "_counts": {
+    "base": 15,
+    "web": 5,
+    "sec": 151.7,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "обновлять RTX 4070 и 32 GB RAM не нужно",
+    "why": "Q4 8B fits: 5 GB model plus approximately 1.125 GiB KV-cache within 12 GB VRAM."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "покупка не нужна",
+    "why": "No purchase is required; smaller models and cloud options are conditional alternatives."
+   }
+  ]
+ },
+ {
+  "scenario": "A6_false_alarm",
+  "session": "10e847f6f9f4",
+  "code": {
+   "_counts": {
+    "base": 23,
+    "web": 3,
+    "sec": 139.3,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "Keep existing: yes — 5 GB weights + ~1.125 GiB KV cache fits within 12 GB.",
+    "why": "Shows that the 4-bit 8B model fits existing VRAM without an upgrade."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "upgrading to 64 GB is optional",
+    "why": "No purchase is required; the RAM upgrade is explicitly optional."
+   }
+  ]
+ },
+ {
+  "scenario": "A7_generation_gap",
+  "session": "c207cb481266",
+  "code": {
+   "_counts": {
+    "base": 13,
+    "web": 2,
+    "sec": 116.0,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "Does not identify missing AVX or software that breaks because of it."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "Ваши 400 Вт не проходят это правило.",
+    "why": "Checks the 400W PSU against the RTX 3060 recommendation and requires replacement."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "Практическое условие: увеличить RAM до 16 ГБ или больше.",
+    "why": "Identifies 8GB RAM as insufficient headroom and makes upgrading a condition."
+   }
+  ]
+ },
+ {
+  "scenario": "A7_generation_gap",
+  "session": "41ea4fe48528",
+  "code": {
+   "_counts": {
+    "base": 13,
+    "web": 2,
+    "sec": 115.8,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "States no AVX/AVX2 but names no software that breaks because of it."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "Ваши 400 Вт ниже этого значения и ниже рекомендации 550 Вт.",
+    "why": "Checks PSU capacity and requires replacement."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "увеличить RAM минимум до 16 ГБ",
+    "why": "Identifies the 8GB RAM limitation and requires an upgrade."
+   }
+  ]
+ },
+ {
+  "scenario": "A7_generation_gap",
+  "session": "5eaa9ee4c576",
+  "code": {
+   "_counts": {
+    "base": 15,
+    "web": 1,
+    "sec": 132.4,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "Does not establish that the Athlon II lacks AVX or name software that breaks as a result."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "БП 400 W — недостаточно по консервативному правилу.",
+    "why": "Flags the 400W PSU as insufficient for the RTX 3060."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "проверить PCIe x16, BIOS",
+    "why": "Names additional platform compatibility checks."
+   }
+  ]
+ },
+ {
+  "scenario": "B1_kv_concurrency",
+  "session": "474d9876aac7",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 23,
+    "web": 0,
+    "sec": 120.7,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "30B × 4.5 bits / 8 = 16.875 GB",
+    "why": "Computes raw weights memory for a stated quantization."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "2 × 48 layers × 4 KV heads × 128 head dim × 2 bytes × 32,768 tokens × 8 users / 2³⁰`\n\n  `= 24 GiB",
+    "why": "Computes total KV memory from model dimensions for eight 32k contexts."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "18 GB + 24 GiB ≈ 40.8 GiB",
+    "why": "Compares the total against 29.8 GiB available, declares insufficient capacity, and proposes CPU KV offload or two GPUs."
+   }
+  ]
+ },
+ {
+  "scenario": "B1_kv_concurrency",
+  "session": "5f32b5192ddd",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 14,
+    "web": 0,
+    "sec": 115.5,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "30B × 4.5 / 8 = 16.875 GB",
+    "why": "Computes weight memory using stated quantization bits."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "2 × 48 layers × 4 KV heads × 128 head-dim × 2 bytes × 32,768 tokens × 8 users / 2³⁰ = 24 GiB",
+    "why": "Computes KV memory from model dimensions for eight 32k contexts."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "a single 32 GB GPU still falls short by roughly 10 GB before overhead",
+    "why": "Compares the combined requirement with 32 GB, rejects it, and recommends multi-GPU capacity above 42 GB plus headroom."
+   }
+  ]
+ },
+ {
+  "scenario": "B1_kv_concurrency",
+  "session": "b6608c996f8e",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 17,
+    "web": 0,
+    "sec": 113.5,
+    "validator_rounds": 1
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "30 × 4.5 / 8 = 16.875 GB",
+    "why": "Computes weight memory using 30B parameters at 4.5 bits."
+   },
+   {
+    "n": 2,
+    "pass": true,
+    "quote": "2 × 48 × 4 × 128 × 2 × 32768 × 8 / 2³⁰ = 24 GiB",
+    "why": "Computes total KV memory from layers, KV heads, head dimension, token count and eight users."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "Одна RTX 5090 32 GB годится примерно для 2–4 таких сессий по memory math, но не для гарантированных восьми.",
+    "why": "Compares the stated 40–42 GB total with 32 GB, rejects eight sessions and gives fewer users as a concrete fix."
+   }
+  ]
+ },
+ {
+  "scenario": "B2_own_vs_rent",
+  "session": "6cf90005543d",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 32,
+    "web": 3,
+    "sec": 287.6,
+    "validator_rounds": 2
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "The priced A6000 is not shown to fit a stated 70B quantization with runtime overhead."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Computes monthly cloud cost but does not compute cloud cost over 24 months."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "0.5 × 3 × 30 × €0.25 ≈ €11.25/month",
+    "why": "Calculates electricity using the stated 500 W, usage hours, and tariff."
+   },
+   {
+    "n": 4,
+    "pass": true,
+    "quote": "breaks even after approximately **40.7 months**, not two years",
+    "why": "Gives a breakeven in months and recommends renting for two years."
+   }
+  ]
+ },
+ {
+  "scenario": "B2_own_vs_rent",
+  "session": "5ada6a2e58ec",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 30,
+    "web": 4,
+    "sec": 428.0,
+    "validator_rounds": 3
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": false,
+    "quote": "",
+    "why": "The two-GPU option has memory math and a price, but no source or date for its purchase price."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "The cloud calculation includes an hourly price and date, but the snapshot has no identifiable source."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "0,6 kW × 3 × 30 × 0,25 = 13,50 EUR/Monat",
+    "why": "Computes electricity from 600 W, usage hours and 0.25 EUR/kWh."
+   },
+   {
+    "n": 4,
+    "pass": true,
+    "quote": "Cloud GPU rental — yes: Berechnet **760,32 EUR** über zwei Jahre gegenüber mindestens **10.024 EUR** lokal.",
+    "why": "Gives both two-year totals and a verdict favoring cloud rental."
+   }
+  ]
+ },
+ {
+  "scenario": "B2_own_vs_rent",
+  "session": "192784d63284",
+  "code": {
+   "min_base_calls": true,
+   "_counts": {
+    "base": 36,
+    "web": 7,
+    "sec": 419.5,
+    "validator_rounds": 3
+   }
+  },
+  "judge": [
+   {
+    "n": 1,
+    "pass": true,
+    "quote": "Weights: `70 × 4.5 ÷ 8 = 39.375 GB` … German listing snapshot from 2026-10-01 … costs €35,969.90 … two 32 GB GPUs provide 64 GB nominal VRAM",
+    "why": "Dated Idealo price and 64 GB VRAM exceed the stated Q4.5 memory requirement."
+   },
+   {
+    "n": 2,
+    "pass": false,
+    "quote": "",
+    "why": "Computes 2,160-hour cloud cost but gives no source or date for the hourly rate."
+   },
+   {
+    "n": 3,
+    "pass": true,
+    "quote": "`1.3 × 3 × 30 × €0.25 = €29.25/month`",
+    "why": "Uses the stated 1,300 W average power, usage hours, and electricity rate."
+   },
+   {
+    "n": 4,
+    "pass": true,
+    "quote": "Buy: `€35,969.90 + €702.00 = €36,671.90`\n- Rent: `€2,638.31`\n- Renting is cheaper",
+    "why": "Provides both two-year totals and a verdict."
+   }
+  ]
+ }
+]

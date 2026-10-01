@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advisor Run Replay</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="runs.js"></script>
+<style>
+:root{--bg:#fafaf8;--panel:#fff;--ink:#1d1d1b;--mute:#6b6b66;--line:#e4e3de;--accent:#c2410c;--ok:#15803d;--bad:#b91c1c;--warn:#fff7ed;--code:#f3f2ee}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--panel:#1f1f1d;--ink:#ecebe6;--mute:#9b9a94;--line:#33322f;--accent:#fb923c;--ok:#4ade80;--bad:#f87171;--warn:#2a1d12;--code:#262624}}
+:root[data-theme="dark"]{--bg:#161615;--panel:#1f1f1d;--ink:#ecebe6;--mute:#9b9a94;--line:#33322f;--accent:#fb923c;--ok:#4ade80;--bad:#f87171;--warn:#2a1d12;--code:#262624}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:28px 16px 12px;max-width:1100px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:24px}
+header p{margin:4px 0;color:var(--mute);max-width:760px}
+a{color:var(--accent)}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px;display:grid;grid-template-columns:240px 1fr;gap:20px}
+nav{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:4px}
+nav button{all:unset;cursor:pointer;padding:8px 10px;border-radius:8px;border:1px solid transparent}
+nav button:hover{background:var(--panel)}
+nav button[aria-current="true"]{background:var(--panel);border-color:var(--line)}
+nav .t{display:block;font-weight:600;font-size:14px}
+nav .s{display:block;font-size:12px;color:var(--mute)}
+main{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:18px}
+.card h3{margin:0 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+.q{border-left:3px solid var(--accent);padding-left:12px;margin:8px 0}
+.meta{color:var(--mute);font-size:13px}
+details{border-top:1px solid var(--line);padding:6px 0}
+details.all{border:0;padding:0}
+details.all>summary{font-family:inherit;font-size:14px;color:var(--accent);padding:4px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;font-family:ui-monospace,Menlo,monospace;font-size:13px;overflow-wrap:anywhere}
+.k{display:inline-block;min-width:38px;font-size:11px;padding:1px 6px;border-radius:5px;background:var(--code);color:var(--mute);margin-right:6px;text-align:center}
+.k.web{color:var(--accent)}
+pre{background:var(--code);padding:10px;border-radius:8px;overflow:auto;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px}
+.round{background:var(--warn);border-radius:8px;padding:10px 12px;margin:8px 0}
+.round b{color:var(--accent)}
+.round li{margin:4px 0;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.tablewrap{overflow-x:auto}
+.answer{overflow-wrap:anywhere}
+.answer table{display:block;overflow-x:auto}
+.answer pre{max-height:none}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;margin-left:6px}
+@media (max-width:760px){.wrap{grid-template-columns:1fr}nav{position:static;flex-direction:row;overflow-x:auto}nav button{flex:0 0 auto}nav .s{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>AI hardware advisor — replay of real runs</h1>
+  <p>Recorded runs of the advisor (v3.1) over <b>Sanity Context MCP</b> on project <code>onwa0wvs</code>, dataset <code>v2</code>.
+  No model runs on this page: every tool call, every validator round and every answer is exactly what was recorded.</p>
+  <p>One run per acceptance scenario — the best-graded English answer of two full runs (9 scenarios × 3). Long tool results are cut.
+  <a href="https://github.com/helgard-orlm/sanity-ai-hardware-advisor">Code &amp; method</a></p>
+</header>
+<div class="wrap">
+  <nav id="nav" aria-label="Scenarios"></nav>
+  <main id="main"><div class="card">Loading…</div></main>
+</div>
+<script>
+const NAMES={A1_no_country:["No country given","Budget without currency or region"],A2_not_in_base:["Model not in the base","GLM-5.3-Flash: web lookup by the base's rules"],
+A3_dont_buy:["Don't buy","When renting or an API is the answer"],A4_changed_mind:["Changed mind","Situation survives a change of plan"],
+A5_budget_too_small:["Budget too small","Saying no with numbers"],A6_false_alarm:["False alarm","You already have enough"],
+A7_generation_gap:["Generation gap","Old CPU without needed instructions"],B1_kv_concurrency:["KV for 8 users","Memory for 8 × 32k context"],
+B2_own_vs_rent:["Own vs rent","Breakeven, Germany, 3 h/day"]};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const md=t=>{try{return marked.parse(t)}catch(e){return "<pre>"+esc(t)+"</pre>"}};
+let RUNS=[];
+function stepHTML(s){const cls=s.kind==="web"?"web":"";
+  return `<details><summary><span class="k ${cls}">${esc(s.kind)}</span>${esc(s.tool)} ${esc(s.args).slice(0,140)}</summary><pre>${esc(s.result)}</pre></details>`}
+function render(i){
+  const r=RUNS[i],[title,sub]=NAMES[r.scenario]||[r.scenario,""];
+  document.querySelectorAll("nav button").forEach((b,j)=>b.setAttribute("aria-current",j===i));
+  let h=`<div class="card"><h2>${esc(title)} <span class="badge">grader ${r.grade?r.grade.pass+"/"+r.grade.of:"—"}</span></h2><div class="meta">${esc(sub)} · session ${esc(r.session)}</div></div>`;
+  for(const t of r.turns){
+    if(t.role==="user"){h+=`<div class="card"><h3>Person</h3><div class="q">${esc(t.text)}</div></div>`;continue}
+    const base=t.steps.filter(s=>s.kind==="base").length,web=t.steps.filter(s=>s.kind==="web").length;
+    const stepsCard=`<div class="card"><h3>Agent steps</h3><details class="all"><summary>${base} Sanity Context MCP calls · ${web} web searches · ${t.sec?Math.round(t.sec)+" s":""} — show all</summary>${t.steps.map(stepHTML).join("")}</details></div>`;
+    h+=stepsCard;
+    const rounds=(t.validator||[]).filter(v=>v.errors&&v.errors.length);
+    if(rounds.length) h+=`<div class="card"><h3>Validator — answer sent back</h3>${rounds.map(v=>`<div class="round"><b>Round ${v.round+1}</b><ul>${v.errors.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    if(t.calculations&&t.calculations.length) h+=`<div class="card"><h3>Calculations (recomputed by code from <code>law.formula</code>)</h3><div class="tablewrap"><table><tr><th>law</th><th>inputs</th><th>result</th></tr>${t.calculations.map(c=>`<tr><td>${esc(c.law)}</td><td><code>${esc(JSON.stringify(c.inputs))}</code></td><td>${esc(typeof c.result==="number"?+c.result.toFixed(3):c.result)}</td></tr>`).join("")}</table></div></div>`;
+    h+=`<div class="card"><h3>Answer</h3><div class="answer">${md(t.text)}</div></div>`;
+  }
+  if(r.grade) h+=`<div class="card"><h3>Blind grader (frozen checklist)</h3><div class="tablewrap"><table>${r.checklist.map((c,k)=>{const g=r.grade.items[k]||{};return `<tr><td class="${g.pass?"pass":"fail"}">${g.pass?"pass":"fail"}</td><td>${esc(c)}${g.why?`<div class="meta">${esc(g.why)}</div>`:""}</td></tr>`}).join("")}</table></div></div>`;
+  document.getElementById("main").innerHTML=h;
+  try{localStorage.setItem("replay-sc",r.scenario)}catch(e){}
+}
+Promise.resolve(window.RUNS||fetch("runs.json").then(r=>r.json())).then(d=>{RUNS=d;
+  document.getElementById("nav").innerHTML=d.map((r,i)=>{const[n,s]=NAMES[r.scenario]||[r.scenario,""];return `<button data-i="${i}"><span class="t">${esc(n)}</span><span class="s">${esc(s)}</span></button>`}).join("");
+  document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{render(+b.dataset.i);window.scrollTo(0,0)});
+  let start=0;try{const s=localStorage.getItem("replay-sc");const j=d.findIndex(r=>r.scenario===s);if(j>=0)start=j}catch(e){}
+  render(start)}).catch(e=>{document.getElementById("main").innerHTML=`<div class="card">Could not load runs.json: ${esc(e)}</div>`});
+</script>
+</body>
+</html>

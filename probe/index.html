@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sanity probe — Luna</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1d2128;--mute:#6b7280;--line:#e3e6ea;--acc:#2f5bea;--base:#0f766e;--web:#b45309;--sh:#9333ea;--err:#b91c1c}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1d2026;--ink:#e6e8eb;--mute:#9aa1ab;--line:#2c3038;--acc:#7c9cff;--base:#2dd4bf;--web:#f59e0b;--sh:#c084fc;--err:#f87171}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;height:100vh}
+aside{width:260px;border-right:1px solid var(--line);padding:12px;overflow:auto;flex-shrink:0}
+aside button{width:100%;margin-bottom:10px}
+.s{padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--mute)}.s:hover,.s.on{background:var(--card);color:var(--ink)}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+#log{flex:1;overflow:auto;padding:16px 20px}
+.m{max-width:900px;margin:0 auto 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.m.user{border-left:3px solid var(--acc)}.m.asst{border-left:3px solid var(--base)}
+.who{font-size:12px;color:var(--mute);margin-bottom:4px}.txt{white-space:pre-wrap}
+details{margin-top:8px;font-size:13px}summary{cursor:pointer;color:var(--mute)}
+.ev{border-top:1px dashed var(--line);padding:6px 0}.tag{font-weight:600;font-size:12px;padding:1px 6px;border-radius:4px;margin-right:6px}
+.base{color:var(--base)}.web{color:var(--web)}.shell{color:var(--sh)}.err{color:var(--err)}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:6px 8px;border-radius:6px;max-height:320px;overflow:auto;margin:4px 0;font-size:12px}
+form{border-top:1px solid var(--line);padding:10px 20px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+textarea{flex:1;min-width:240px;min-height:60px;font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}button:disabled{opacity:.5}
+label{font-size:13px;color:var(--mute);display:flex;gap:4px;align-items:center}
+.meta{font-size:12px;color:var(--mute);margin-top:6px}
+@media (max-width:700px){aside{display:none}}
+</style></head><body>
+<aside><button onclick="newChat()">+ New conversation</button>
+<div style="font-size:12px;color:var(--mute);margin:4px 0 8px">Base: <a href="https://hw-for-ai-lab.sanity.studio" target="_blank">Studio v1</a> · v2: dataset v2 (Studio later)</div>
+<div id="list"></div></aside>
+<main><div id="log"></div>
+<form onsubmit="ask(event)"><textarea id="q" placeholder="Ask like a user would. Enter = send, Shift+Enter = new line"></textarea>
+<div style="display:flex;flex-direction:column;gap:4px"><label><input type="checkbox" id="base" checked> Sanity base</label>
+<label><input type="checkbox" id="web" checked> Web search</label></div>
+<div style="display:flex;flex-direction:column;gap:4px"><label>Base <select id="db"><option value="v31real" selected>v3.1 real Sanity Context MCP</option><option value="v31">v3.1 (stand-in MCP)</option><option value="v3">v3 (paths + validator)</option><option value="v2">v2 (model-filled)</option><option value="v1">v1 (old)</option></select></label>
+<label>Model <select id="model"><option value="luna" selected>Luna (gpt-5.6-luna)</option><option value="sol">Sol (gpt-6-sol)</option></select></label>
+<label>Thinking <select id="effort"><option value="default" selected>default (server)</option><option value="none">none (off)</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select></label>
+<label>Window <select id="win"><option value="direct" selected>left: direct answer</option><option value="dialogue">right: dialogue</option></select></label></div>
+<button class="pri" id="send">Send</button></form></main>
+<script>
+let sid=null,timer=null;const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function newChat(){sid=null;$('log').innerHTML='';loadList();$('q').focus()}
+async function loadList(){const r=await (await fetch('/api/sessions')).json();
+ $('list').innerHTML=r.map(s=>`<div class="s ${s.id==sid?'on':''}" onclick="openS('${s.id}')">${esc(s.title)||'(empty)'}</div>`).join('')}
+async function openS(id){sid=id;await refresh();loadList()}
+function traceHtml(tr){if(!tr||!tr.length)return'<div class="ev err">No calls — the answer did not come from the base.</div>';
+ return tr.map(e=>{if(e.kind=='base'){return `<div class="ev"><span class="tag base">BASE</span><b>${esc(e.tool)}</b> <span class="meta">${e.t}s</span>
+  ${e.args&&Object.keys(e.args).length?`<pre>${esc(e.args.query||JSON.stringify(e.args,null,1))}</pre>`:''}
+  <details><summary>result (${(e.result||'').length} chars)</summary><pre>${esc(e.result)}</pre></details>${e.error?`<div class="err">${esc(JSON.stringify(e.error))}</div>`:''}</div>`}
+  if(e.kind=='web')return `<div class="ev"><span class="tag web">WEB</span>${esc(e.query)} <span class="meta">${e.t}s</span></div>`;
+  return `<div class="ev"><span class="tag shell">SHELL</span><code>${esc(e.command)}</code></div>`}).join('')}
+function render(s){$('log').innerHTML=s.messages.map(m=>{if(m.role=='user')return `<div class="m user"><div class="who">You</div><div class="txt">${esc(m.text)}</div></div>`;
+ const tr=m.trace||[],nb=tr.filter(e=>e.kind=='base').length,nw=tr.filter(e=>e.kind=='web').length;
+ const mode=`${m.mode?.base?('base '+(m.mode?.db||'v1')):'base OFF'}, ${m.mode?.web?'web on':'web off'}${m.mode?.win?', '+(m.mode.win=='dialogue'?'right window':'left window'):''}${m.mode?.effort&&m.mode.effort!='default'?', thinking '+m.mode.effort:''}`;
+ return `<div class="m asst"><div class="who">${m.mode?.model=='sol'?'Sol':'Luna'} · ${mode}${m.status=='running'?' · <b>thinking…</b>':''}</div>
+ <div class="txt">${esc(m.text)||'…'}</div>
+ <details ${m.status=='running'?'open':''}><summary>Trace: ${nb} base calls${nw?`, ${nw} web searches`:''}</summary>${traceHtml(tr)}</details>
+ ${m.status&&m.status!='done'&&m.status!='running'?`<div class="err">${esc(m.status)}</div>`:''}
+ ${m.sec?`<div class="meta">${m.sec}s · tokens in ${m.usage?.input_tokens??'?'} / out ${m.usage?.output_tokens??'?'}</div>`:''}</div>`}).join('');
+ $('log').scrollTop=$('log').scrollHeight;$('send').disabled=!!s.running}
+async function refresh(){if(!sid)return;const s=await (await fetch('/api/session/'+sid)).json();render(s);
+ clearTimeout(timer);if(s.running)timer=setTimeout(refresh,1500)}
+async function ask(e){e.preventDefault();const text=$('q').value.trim();if(!text)return;
+ const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sid,text,base:$('base').checked,web:$('web').checked,db:$('db').value,win:$('win').value,model:$('model').value,effort:$('effort').value})});
+ const j=await r.json();if(!r.ok){alert(j.error);return}sid=j.session;$('q').value='';await refresh();loadList()}
+$('q').addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.shiftKey){e.preventDefault();$('send').click()}});
+loadList();
+</script></body></html>
