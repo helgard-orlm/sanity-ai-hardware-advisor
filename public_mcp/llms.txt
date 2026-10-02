@@ -1,0 +1,12 @@
+# AI Hardware Advisor
+
+> A Sanity knowledge base (laws/formulas, rules, solution paths, run reports) that answers "what computer do I need
+> to run this AI model — or should I keep, upgrade or rent?" and recomputes the agent's math with its own formulas.
+
+- [Agent setup + how to use](https://hw-advisor.helgardorlm.tech/setup.md): read and follow this first.
+- [Context: instructions + schema](https://hw-advisor.helgardorlm.tech/api/context)
+- Query: https://hw-advisor.helgardorlm.tech/api/query?q=<URL-encoded GROQ>
+- Check a draft answer: POST JSON {answer, searched_web} to https://hw-advisor.helgardorlm.tech/api/check
+- GET-only agents: send the draft in ~1500-char pieces with /api/part?draft=<random id>&n=1&text=<URL-encoded>, n=2, …, then /api/check?draft=<id>&searched_web=true|false (checks the whole joined draft)
+- MCP endpoint (streamable HTTP, no auth): https://hw-advisor.helgardorlm.tech/mcp
+- [Skill file](https://hw-advisor.helgardorlm.tech/SKILL.md)

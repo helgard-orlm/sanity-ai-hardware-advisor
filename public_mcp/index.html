@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Hardware Advisor</title>
+<meta name="description" content="Connect your own AI agent (ChatGPT, Claude, Codex, Cursor) to a Sanity knowledge base that answers 'what computer do I need to run this AI model?' — and checks its own math.">
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#1d1d1b;--mute:#5d5b55;--line:#e3e0d8;--acc:#e8462c;--acc2:#1e5bd8;--code:#f0eee8;--ok:#1d7a46}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141413;--card:#1d1d1b;--ink:#ecebe6;--mute:#a19f97;--line:#33322e;--acc:#ff6a4d;--acc2:#7aa7ff;--code:#262522;--ok:#5ccf8d}}
+:root[data-theme="dark"]{--bg:#141413;--card:#1d1d1b;--ink:#ecebe6;--mute:#a19f97;--line:#33322e;--acc:#ff6a4d;--acc2:#7aa7ff;--code:#262522;--ok:#5ccf8d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.15;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:22px;margin:44px 0 12px}
+p{margin:0 0 12px}
+.lead{font-size:18px;color:var(--mute);max-width:680px}
+.tag{display:inline-block;font-size:13px;font-weight:600;color:var(--acc);border:1px solid var(--acc);border-radius:99px;padding:2px 10px;margin-bottom:16px}
+.url{display:flex;gap:8px;align-items:stretch;margin:22px 0 6px;flex-wrap:wrap}
+.url code{flex:1 1 320px;background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:12px 14px;font-size:16px;overflow-x:auto;white-space:nowrap}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 16px;background:var(--ink);color:var(--bg);font-weight:600}
+button.sm{padding:4px 10px;font-size:13px;border-radius:7px;background:var(--code);color:var(--ink);border:1px solid var(--line)}
+.small{font-size:14px;color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:-1px}
+.tabs button{background:transparent;color:var(--mute);border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:8px 14px}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);border-color:var(--line)}
+.panel{border-top-left-radius:0}
+.panel[hidden]{display:none}
+ol{padding-left:22px;margin:0}
+li{margin:4px 0}
+pre{background:var(--code);border-radius:8px;padding:10px 12px;overflow-x:auto;font-size:14px;margin:8px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:not(pre)>code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:.92em}
+.qs{display:grid;gap:10px}
+.q{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.q span{flex:1}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.step b{display:block;margin-bottom:4px}
+.step .n{color:var(--acc);font-weight:700;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+td{border-top:1px solid var(--line);padding:8px 6px;vertical-align:top}
+td:first-child{white-space:nowrap;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+a{color:var(--acc2)}
+.links{display:flex;flex-wrap:wrap;gap:8px 18px}
+footer{margin-top:48px;font-size:13px;color:var(--mute)}
+.ok{color:var(--ok);font-weight:600}
+.quick{display:grid;gap:14px}
+.qrow{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.qrow>div:first-child{flex:1 1 360px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+a.btn,button.btn{display:inline-block;text-decoration:none;border-radius:10px;padding:10px 16px;background:var(--ink);color:var(--bg);font-weight:600;font-size:15px}
+.exp{font-size:12px;font-weight:600;color:var(--acc);border:1px solid var(--acc);border-radius:99px;padding:0 7px;margin-left:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Sanity Challenge · bring your own agent</span>
+  <h1>What computer do I need to run <em>this</em> AI model?</h1>
+  <p class="lead">Ask your own AI agent. Connect ChatGPT, Claude, Codex or Cursor to this server, and it answers from a Sanity knowledge base of formulas, rules and real measurements, then checks its own math against the base before you see the answer. It also tells you when to keep the computer you have or rent instead.</p>
+
+  <div class="url"><code id="mcp">https://hw-advisor.helgardorlm.tech/mcp</code><button onclick="cp(document.getElementById('mcp').textContent,this)">Copy URL</button></div>
+  <p class="small">A remote MCP server: streamable HTTP, no login. Your model, your subscription; the base and the math check are on us.</p>
+
+  <h2>One click</h2>
+  <div class="card quick">
+    <div class="qrow"><div><b>Cursor or VS Code</b><br><span class="small">Opens your editor and adds the server.</span></div>
+      <div class="btns"><a class="btn" id="cursorBtn" href="#">Add to Cursor</a><a class="btn" id="vscodeBtn" href="#">Add to VS Code</a></div></div>
+    <div class="qrow"><div><b>Any agent that runs commands</b> (Claude Code, Codex, Cursor agent)<br><span class="small">Paste this. The agent reads the setup page, offers to install the server for later sessions, and answers now over HTTPS.</span></div>
+      <div class="btns"><button class="btn" onclick="cp(AGENT,this)">Copy prompt</button></div></div>
+    <div class="qrow"><div><b>Plain chat with web access</b> (ChatGPT free, Claude, Gemini) <span class="exp">experimental</span><br><span class="small">No setup. The chat opens our plain HTTPS API by itself. This depends on the chat's browsing tool, which may refuse long query links.</span></div>
+      <div class="btns"><button class="btn" onclick="cp(CHAT,this)">Copy prompt</button></div></div>
+  </div>
+
+  <h2>Or connect it by hand</h2>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-t="gpt">ChatGPT</button>
+    <button role="tab" aria-selected="false" data-t="claude">Claude</button>
+    <button role="tab" aria-selected="false" data-t="cc">Claude Code</button>
+    <button role="tab" aria-selected="false" data-t="codex">Codex CLI</button>
+    <button role="tab" aria-selected="false" data-t="cursor">Cursor</button>
+    <button role="tab" aria-selected="false" data-t="vscode">VS Code</button>
+  </div>
+  <div class="card panel" id="gpt"><ol>
+    <li>Use ChatGPT on the web with a Plus, Pro, Business, Enterprise or Edu plan. The free plan cannot add custom connectors.</li>
+    <li><b>Settings → Apps → Advanced settings</b>: turn on <b>Developer mode</b>.</li>
+    <li>Click <b>Create</b>. Name: <code>AI Hardware Advisor</code>, URL: the address above, Authentication: <b>None</b>.</li>
+    <li>In a new chat, pick the connector from the <b>+</b> menu (Developer mode) and ask a question below.</li>
+  </ol></div>
+  <div class="card panel" id="claude" hidden><ol>
+    <li>On claude.ai, open <b>Settings → Connectors → Add custom connector</b>.</li>
+    <li>Name: <code>AI Hardware Advisor</code>, URL: the address above. No OAuth needed.</li>
+    <li>Enable it in a chat from the tools menu and ask a question below.</li>
+  </ol></div>
+  <div class="card panel" id="cc" hidden>
+    <pre>claude mcp add --transport http hw-advisor https://hw-advisor.helgardorlm.tech/mcp</pre>
+    <p class="small">Then run <code>claude</code> and ask a question below.</p>
+  </div>
+  <div class="card panel" id="codex" hidden>
+    <p>Add to <code>~/.codex/config.toml</code>:</p>
+<pre>[mcp_servers.hw-advisor]
+url = "https://hw-advisor.helgardorlm.tech/mcp"</pre>
+  </div>
+  <div class="card panel" id="cursor" hidden>
+    <p>Add to <code>~/.cursor/mcp.json</code>:</p>
+<pre>{ "mcpServers": { "hw-advisor": { "url": "https://hw-advisor.helgardorlm.tech/mcp" } } }</pre>
+  </div>
+  <div class="card panel" id="vscode" hidden>
+    <p>Add to <code>.vscode/mcp.json</code> (or run <b>MCP: Add Server</b> → HTTP):</p>
+<pre>{ "servers": { "hw-advisor": { "type": "http", "url": "https://hw-advisor.helgardorlm.tech/mcp" } } }</pre>
+  </div>
+
+  <h2>Questions to try</h2>
+  <div class="card qs" id="qs"></div>
+  <p class="small" style="margin-top:8px">Each <b>Copy</b> puts this line in front of the question: <i>"Use the AI Hardware Advisor tools: call initial_context first…"</i>. Without it, an agent may answer from memory and skip the base. Agent files: <a href="/setup.md">setup.md</a> · <a href="/SKILL.md">SKILL.md</a> (Claude Code and Codex skill) · <a href="/llms.txt">llms.txt</a>.</p>
+
+  <h2>What happens when you ask</h2>
+  <div class="flow">
+    <div class="step"><span class="n">1</span><b>Instructions + schema</b><code>initial_context</code> gives the agent the advisor's work order and the dataset schema through Sanity Context MCP.</div>
+    <div class="step"><span class="n">2</span><b>Need in numbers</b>Laws (weights, KV cache, speed ceiling, own vs rent) are fetched as data with <code>groq_query</code>. Models that are not in the base are looked up on the web, using the base's rules as a checklist.</div>
+    <div class="step"><span class="n">3</span><b>Every path</b>All 11 solution paths, from keeping what you have to renting a GPU, get a yes, no or maybe with a number.</div>
+    <div class="step"><span class="n">4</span><b>Math checked</b><code>check_answer</code> recomputes each calculation with the formula stored in Sanity and returns errors until the answer is right.</div>
+  </div>
+
+  <h2>Tools on this server</h2>
+  <div class="card"><table>
+    <tr><td>initial_context</td><td>Advisor instructions plus the Sanity schema and document counts. Call it first.</td></tr>
+    <tr><td>groq_query</td><td>Read-only GROQ over the public dataset <code>v2</code>, with embeddings on, so semantic search works.</td></tr>
+    <tr><td>schema_explorer</td><td>Fields and allowed values of one document type.</td></tr>
+    <tr><td>array_field_reader</td><td>Reads long array fields in parts.</td></tr>
+    <tr><td>check_answer</td><td>The validator from the app. It recomputes laws, checks that every path got a verdict, catches substitute products and flags prices without a source. <span class="ok">Added by this server.</span></td></tr>
+  </table>
+  <p class="small" style="margin:10px 0 0">The first four tools are Sanity Context MCP, passed through unchanged. The access token stays on the server.</p></div>
+
+  <h2>No paid plan? See it run</h2>
+  <p>A replay of all 27 measured runs shows the full tool calls, the base documents the agent read, and the validator's corrections: <a href="https://helgard-orlm.github.io/sanity-ai-hardware-advisor/">helgard-orlm.github.io/sanity-ai-hardware-advisor</a>.</p>
+
+  <h2>Under the hood</h2>
+  <div class="links">
+    <a href="https://github.com/helgard-orlm/sanity-ai-hardware-advisor">Source on GitHub</a>
+    <a href="https://hw-for-ai-lab-v2.sanity.studio/">Sanity Studio (dataset v2)</a>
+    <span class="small">Sanity project <code>onwa0wvs</code> · public dataset <code>v2</code></span>
+  </div>
+
+  <h2>Limits and privacy</h2>
+  <p class="small">This is a free demo on a free Sanity plan, so calls are limited per visitor per hour and per day in total. Past the daily limit, <code>groq_query</code> falls back to the public dataset API. The server logs which tool was called and the GROQ query text, with a salted hash in place of your IP address. It never sees your chat. Answers are advice from a knowledge base, not a guarantee. Check prices and specifications before you buy.</p>
+
+  <footer>Built for the DEV × Sanity Challenge 2026 · Path One: an agent that queries real content.</footer>
+</div>
+<script>
+const Q=[
+ "I have a PC with an RTX 3060 12 GB and 32 GB RAM. Can I run Qwen3 32B for coding help, a few hours a day? If not, what's the cheapest way?",
+ "I want to run a 120B mixture-of-experts model at home. Do I really need several GPUs, or is there another path?",
+ "Budget 1500 EUR, I live in Poland, privacy matters. What should I buy to chat with a local model, or should I just use an API?",
+ "My old office PC has an AMD Athlon II and 16 GB RAM. Can I add a graphics card and run local AI on it?"
+];
+const MCP="https://hw-advisor.helgardorlm.tech/mcp";
+document.getElementById('cursorBtn').href="cursor://anysphere.cursor-deeplink/mcp/install?name=hw-advisor&config="+btoa(JSON.stringify({url:MCP}));
+document.getElementById('vscodeBtn').href="vscode:mcp/install?"+encodeURIComponent(JSON.stringify({name:"hw-advisor",type:"http",url:MCP}));
+const AGENT="Read https://hw-advisor.helgardorlm.tech/setup.md and follow it. Then answer my question: "+Q[0];
+const CHAT="Open https://hw-advisor.helgardorlm.tech/llms.txt and use that HTTPS API: first open /api/context, then query the base with /api/query links, and check your whole draft with /api/check before answering (if long links fail, send it in pieces with /api/part as llms.txt says, then /api/check?draft=…). My question: "+Q[0];
+const box=document.getElementById('qs');
+const PRE="Use the AI Hardware Advisor tools: call initial_context first, and validate your draft with check_answer before answering. ";
+Q.forEach(q=>{const d=document.createElement('div');d.className='q';const s=document.createElement('span');s.textContent=q;const b=document.createElement('button');b.className='sm';b.textContent='Copy';b.onclick=()=>cp(PRE+q,b);d.append(s,b);box.append(d)});
+function cp(t,b){const done=()=>{const o=b.textContent;b.textContent='Copied';setTimeout(()=>b.textContent=o,1200)};try{navigator.clipboard.writeText(t).then(done,done)}catch(e){done()}}
+document.querySelectorAll('[role=tab]').forEach(t=>t.onclick=()=>{document.querySelectorAll('[role=tab]').forEach(x=>{x.setAttribute('aria-selected',x===t);document.getElementById(x.dataset.t).hidden=x!==t})});
+</script>
+</body>
+</html>
